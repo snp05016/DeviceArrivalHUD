@@ -32,6 +32,19 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
             let handler: (DeviceEvent) -> Void = { [weak self] event in
                 self?.hud.enqueue(event)
                 self?.actionRunner?.handle(event)
+                var payload: [String: Any] = [
+                    "id": event.deviceID,
+                    "name": event.displayName,
+                    "kind": event.kind.rawValue,
+                    "connected": event.event == .connected
+                ]
+                if let battery = event.batteryPercentage { payload["battery"] = battery }
+                DistributedNotificationCenter.default().postNotificationName(
+                    Notification.Name("com.saumya.DeviceArrivalHUD.event"),
+                    object: nil,
+                    userInfo: payload,
+                    deliverImmediately: true
+                )
             }
             let bluetooth = BluetoothConnectionMonitor(configuration: configuration, eventHandler: handler)
             let system = SystemDeviceMonitor(eventHandler: handler)
